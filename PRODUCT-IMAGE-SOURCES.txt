@@ -1,0 +1,13 @@
+Product image sources found through web image search. Images retain their original manufacturer branding. Confirm image usage permissions before public use.
+
+mobile-concrete-batching-plant: https://www.elkon.net/media/jwwkhjzi/mob-100.jpg
+compact-concrete-batching-plant: https://www.elkon.net/media/jgnjd4ug/elkomix-35-quick-master_14.jpg
+stationary-concrete-batching-plant: https://www.elkon.net/media/nief2ezl/elkomix-240-3_4.jpg
+cement-silo: https://www.cementsilo.com/d/pic/fly-ash-530-2.jpg
+jaw-crusher: https://image.made-in-china.com/2f0j00dTEqolnkgLzU/Fixed-Crusher-Jaw-Crusher-Industrial-Stone-Construction-Waste-Sand-and-Stone-Plant-Crusher-Mechanism-Sand-Machine.webp
+cone-crusher: https://hub-4.com/files/img_cache/72237/1024_img.jpg
+roll-crusher: https://www.desenmachinery.com/static/upload/image/20221105/1667642863987608.jpg
+vibrating-screen: https://nesansindia.in/media/cloudinary_static/blog/Blog/featured_image/screen-deck-tensioning.png
+washing-system: https://www.baichychina.com/d/file/Sand/2024-08-10/cf432a92a67a83505785163ed37802bf.png
+excavator: https://spanish.road-constructionmachinery.com/photo/ps188850711-37_ton_hydraulic_crawler_excavator_xe370ca_with_isuzu_engine_in_stock.jpg
+propell-crusher: https://equipmenttimes.in/uploads/images/202407/image_870x_668f81bf8e68e.jpg
