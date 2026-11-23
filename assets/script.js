@@ -86,47 +86,107 @@ document.querySelectorAll('[data-count]').forEach(el=>countObserver.observe(el))
   },{passive:true});
 })();
 
-// Device-specific WhatsApp links and inquiry submission (no PHP or email).
+// Floating WhatsApp button: open app on mobile, web.whatsapp on desktop.
 const isWhatsAppMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 document.querySelectorAll('.whatsapp-btn').forEach(a => { if (isWhatsAppMobile) a.href = a.href.replace('web.whatsapp.com', 'api.whatsapp.com'); });
+
+// Inquiry → email (GitHub Pages / JS). Primary: FormSubmit (works now).
+// Optional Apps Script URL only if Code.gs has doPost deployed (inbox-friendly).
+const INQUIRY_ENDPOINT = '';
+const INQUIRY_TO = 'dharmendrasinhsisodiya8733@gmail.com';
+const leadId = () => Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
+
+async function sendViaFormSubmit(payload) {
+  const res = await fetch('https://formsubmit.co/ajax/' + encodeURIComponent(INQUIRY_TO), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({
+      _subject: payload.subject,
+      _template: 'table',
+      _captcha: 'false',
+      _replyto: payload.email,
+      Name: payload.name,
+      Company: payload.company,
+      Email: payload.email,
+      Phone: payload.phone,
+      'Product / Requirement': payload.product,
+      Message: payload.message,
+      'Source Page': payload.source
+    })
+  });
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || json.success === 'false' || json.success === false) {
+    throw new Error(json.message || 'FormSubmit failed');
+  }
+}
+
+async function sendViaAppsScript(payload) {
+  const res = await fetch(INQUIRY_ENDPOINT, {
+    method: 'POST',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+  const text = await res.text();
+  if (/Script function not found|Error<\/title>/i.test(text)) {
+    throw new Error('Apps Script not ready');
+  }
+  let json = {};
+  try { json = JSON.parse(text); } catch (_) {}
+  if (json.success === false) throw new Error(json.message || 'Apps Script failed');
+}
+
 document.querySelectorAll('.inquiry-form').forEach(form => {
-  form.addEventListener('submit', event => {
+  const btn = form.querySelector('[type=submit]');
+  const status = form.querySelector('.form-msg');
+  form.elements.phone?.addEventListener('input', () => form.elements.phone.setCustomValidity(''));
+  if (btn) btn.disabled = false;
+
+  form.addEventListener('submit', async event => {
     event.preventDefault();
     if (!form.reportValidity()) return;
+
     const data = new FormData(form);
     const get = name => String(data.get(name) || '').trim();
     if (get('website')) return;
-    const phone = form.elements.phone;
+
+    const phoneEl = form.elements.phone;
     const digits = get('phone').replace(/\D/g, '');
     if (!/^\+?[0-9 ]+$/.test(get('phone')) || digits.length < 7 || digits.length > 15) {
-      phone.setCustomValidity('Enter a valid phone number with 7 to 15 digits.');
-      phone.reportValidity();
+      phoneEl.setCustomValidity('Enter a valid phone number with 7 to 15 digits.');
+      phoneEl.reportValidity();
       return;
     }
-    const message = [
-      '*🏗️ MECH EQUIP INTERNATIONAL*', '',
-      '*📩 NEW WEBSITE INQUIRY*', '',
-      '━━━━━━━━━━━━━━━━━━', '',
-      '*👤 CUSTOMER DETAILS*', '',
-      '*Full Name:* ' + get('name'), '',
-      '*Company:* ' + (get('company') || 'Not provided'), '',
-      '*Email:* ' + get('email'), '',
-      '*Phone:* ' + get('phone'), '',
-      '━━━━━━━━━━━━━━━━━━', '',
-      '*⚙️ PRODUCT REQUIREMENT*',
-      get('product') || 'Not provided', '',
-      '*📝 MESSAGE*',
-      get('message') || 'Not provided', '',
-      '━━━━━━━━━━━━━━━━━━', '',
-      '*🌐 Source:* Website Inquiry Form', '',
-      '_Thank you for contacting Mech Equip International._'
-    ].join('\n');
-    const base = isWhatsAppMobile ? 'https://api.whatsapp.com/send' : 'https://web.whatsapp.com/send';
-    const url = base + '?phone=919106621761&text=' + encodeURIComponent(message);
-    const status = form.querySelector('.form-msg');
-    if (status) status.textContent = 'Please press Send in WhatsApp to complete your inquiry.';
-    window.location.assign(url);
+
+    const payload = {
+      name: get('name'),
+      company: get('company') || '—',
+      email: get('email'),
+      phone: get('phone'),
+      product: get('product') || '—',
+      message: get('message') || '—',
+      source: get('source') || location.href,
+      subject: 'Website Inquiry - Mech Equip International (lead#' + leadId() + ')'
+    };
+
+    if (btn) btn.disabled = true;
+    if (status) status.textContent = 'Sending your inquiry...';
+
+    try {
+      let sent = false;
+      if (INQUIRY_ENDPOINT) {
+        try {
+          await sendViaAppsScript(payload);
+          sent = true;
+        } catch (_) { /* fall back */ }
+      }
+      if (!sent) await sendViaFormSubmit(payload);
+      location.assign('thankyou.html');
+    } catch (err) {
+      if (status) {
+        status.textContent = 'Unable to send your inquiry right now. Please try again or contact us by phone.';
+      }
+      if (btn) btn.disabled = false;
+    }
   });
-  form.querySelector('[type=submit]').disabled = false;
-  form.elements.phone?.addEventListener('input', () => form.elements.phone.setCustomValidity(''));
 });
