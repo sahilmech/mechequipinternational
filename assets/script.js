@@ -116,7 +116,10 @@ async function sendViaFormSubmit(payload) {
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || json.success === 'false' || json.success === false) {
-    throw new Error(json.message || 'FormSubmit failed');
+    const msg = String(json.message || 'FormSubmit failed');
+    const err = new Error(msg);
+    err.needsActivation = /activat/i.test(msg);
+    throw err;
   }
 }
 
@@ -184,7 +187,9 @@ document.querySelectorAll('.inquiry-form').forEach(form => {
       location.assign('thankyou.html');
     } catch (err) {
       if (status) {
-        status.textContent = 'Unable to send your inquiry right now. Please try again or contact us by phone.';
+        status.textContent = err?.needsActivation
+          ? 'Almost ready: open Gmail (' + INQUIRY_TO + '), click FormSubmit Activate Form for this website, then submit again.'
+          : 'Unable to send your inquiry right now. Please try again or contact us by phone.';
       }
       if (btn) btn.disabled = false;
     }
