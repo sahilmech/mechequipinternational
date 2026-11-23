@@ -90,9 +90,8 @@ document.querySelectorAll('[data-count]').forEach(el=>countObserver.observe(el))
 const isWhatsAppMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 document.querySelectorAll('.whatsapp-btn').forEach(a => { if (isWhatsAppMobile) a.href = a.href.replace('web.whatsapp.com', 'api.whatsapp.com'); });
 
-// Inquiry → email via Web3Forms (GitHub Pages OK; no FormSubmit activate step).
-// Get free key: https://web3forms.com → enter inbox email → paste access_key below.
-const WEB3FORMS_ACCESS_KEY = '';
+// Inquiry → email via FormSubmit (GitHub Pages OK, no access key).
+const INQUIRY_TO = 'dharmendrasinhsisodiya8733@gmail.com';
 const leadId = () => Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
 
 document.querySelectorAll('.inquiry-form').forEach(form => {
@@ -109,11 +108,6 @@ document.querySelectorAll('.inquiry-form').forEach(form => {
     const get = name => String(data.get(name) || '').trim();
     if (get('website')) return;
 
-    if (!WEB3FORMS_ACCESS_KEY) {
-      if (status) status.textContent = 'Email key missing. Open web3forms.com, create Access Key, paste it in assets/script.js (WEB3FORMS_ACCESS_KEY).';
-      return;
-    }
-
     const phoneEl = form.elements.phone;
     const digits = get('phone').replace(/\D/g, '');
     if (!/^\+?[0-9 ]+$/.test(get('phone')) || digits.length < 7 || digits.length > 15) {
@@ -123,31 +117,32 @@ document.querySelectorAll('.inquiry-form').forEach(form => {
     }
 
     const payload = {
-      access_key: WEB3FORMS_ACCESS_KEY,
-      subject: 'Website Inquiry - Mech Equip International (lead#' + leadId() + ')',
-      from_name: 'Mech Equip Website',
-      name: get('name'),
-      company: get('company') || '—',
-      email: get('email'),
-      phone: get('phone'),
-      product: get('product') || '—',
-      message: get('message') || '—',
-      source: get('source') || location.href,
-      replyto: get('email'),
-      botcheck: ''
+      _subject: 'Website Inquiry - Mech Equip International (lead#' + leadId() + ')',
+      _template: 'table',
+      _captcha: 'false',
+      _replyto: get('email'),
+      Name: get('name'),
+      Company: get('company') || '—',
+      Email: get('email'),
+      Phone: get('phone'),
+      'Product / Requirement': get('product') || '—',
+      Message: get('message') || '—',
+      'Source Page': get('source') || location.href
     };
 
     if (btn) btn.disabled = true;
     if (status) status.textContent = 'Sending your inquiry...';
 
     try {
-      const res = await fetch('https://api.web3forms.com/submit', {
+      const res = await fetch('https://formsubmit.co/ajax/' + encodeURIComponent(INQUIRY_TO), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload)
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok || !json.success) throw new Error(json.message || 'send failed');
+      if (!res.ok || json.success === 'false' || json.success === false) {
+        throw new Error(json.message || 'send failed');
+      }
       location.assign('thankyou.html');
     } catch (err) {
       if (status) {
