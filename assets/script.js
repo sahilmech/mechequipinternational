@@ -90,54 +90,10 @@ document.querySelectorAll('[data-count]').forEach(el=>countObserver.observe(el))
 const isWhatsAppMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 document.querySelectorAll('.whatsapp-btn').forEach(a => { if (isWhatsAppMobile) a.href = a.href.replace('web.whatsapp.com', 'api.whatsapp.com'); });
 
-// Inquiry → email (GitHub Pages / JS). Primary: FormSubmit (works now).
-// Optional Apps Script URL only if Code.gs has doPost deployed (inbox-friendly).
-const INQUIRY_ENDPOINT = '';
-const INQUIRY_TO = 'dharmendrasinhsisodiya8733@gmail.com';
+// Inquiry → email via Web3Forms (GitHub Pages OK; no FormSubmit activate step).
+// Get free key: https://web3forms.com → enter inbox email → paste access_key below.
+const WEB3FORMS_ACCESS_KEY = '';
 const leadId = () => Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
-
-async function sendViaFormSubmit(payload) {
-  const res = await fetch('https://formsubmit.co/ajax/' + encodeURIComponent(INQUIRY_TO), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-    body: JSON.stringify({
-      _subject: payload.subject,
-      _template: 'table',
-      _captcha: 'false',
-      _replyto: payload.email,
-      Name: payload.name,
-      Company: payload.company,
-      Email: payload.email,
-      Phone: payload.phone,
-      'Product / Requirement': payload.product,
-      Message: payload.message,
-      'Source Page': payload.source
-    })
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok || json.success === 'false' || json.success === false) {
-    const msg = String(json.message || 'FormSubmit failed');
-    const err = new Error(msg);
-    err.needsActivation = /activat/i.test(msg);
-    throw err;
-  }
-}
-
-async function sendViaAppsScript(payload) {
-  const res = await fetch(INQUIRY_ENDPOINT, {
-    method: 'POST',
-    redirect: 'follow',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(payload)
-  });
-  const text = await res.text();
-  if (/Script function not found|Error<\/title>/i.test(text)) {
-    throw new Error('Apps Script not ready');
-  }
-  let json = {};
-  try { json = JSON.parse(text); } catch (_) {}
-  if (json.success === false) throw new Error(json.message || 'Apps Script failed');
-}
 
 document.querySelectorAll('.inquiry-form').forEach(form => {
   const btn = form.querySelector('[type=submit]');
@@ -153,6 +109,11 @@ document.querySelectorAll('.inquiry-form').forEach(form => {
     const get = name => String(data.get(name) || '').trim();
     if (get('website')) return;
 
+    if (!WEB3FORMS_ACCESS_KEY) {
+      if (status) status.textContent = 'Email key missing. Open web3forms.com, create Access Key, paste it in assets/script.js (WEB3FORMS_ACCESS_KEY).';
+      return;
+    }
+
     const phoneEl = form.elements.phone;
     const digits = get('phone').replace(/\D/g, '');
     if (!/^\+?[0-9 ]+$/.test(get('phone')) || digits.length < 7 || digits.length > 15) {
@@ -162,6 +123,9 @@ document.querySelectorAll('.inquiry-form').forEach(form => {
     }
 
     const payload = {
+      access_key: WEB3FORMS_ACCESS_KEY,
+      subject: 'Website Inquiry - Mech Equip International (lead#' + leadId() + ')',
+      from_name: 'Mech Equip Website',
       name: get('name'),
       company: get('company') || '—',
       email: get('email'),
@@ -169,27 +133,25 @@ document.querySelectorAll('.inquiry-form').forEach(form => {
       product: get('product') || '—',
       message: get('message') || '—',
       source: get('source') || location.href,
-      subject: 'Website Inquiry - Mech Equip International (lead#' + leadId() + ')'
+      replyto: get('email'),
+      botcheck: ''
     };
 
     if (btn) btn.disabled = true;
     if (status) status.textContent = 'Sending your inquiry...';
 
     try {
-      let sent = false;
-      if (INQUIRY_ENDPOINT) {
-        try {
-          await sendViaAppsScript(payload);
-          sent = true;
-        } catch (_) { /* fall back */ }
-      }
-      if (!sent) await sendViaFormSubmit(payload);
+      const res = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json.success) throw new Error(json.message || 'send failed');
       location.assign('thankyou.html');
     } catch (err) {
       if (status) {
-        status.textContent = err?.needsActivation
-          ? 'Almost ready: open Gmail (' + INQUIRY_TO + '), click FormSubmit Activate Form for this website, then submit again.'
-          : 'Unable to send your inquiry right now. Please try again or contact us by phone.';
+        status.textContent = 'Unable to send your inquiry right now. Please try again or contact us by phone.';
       }
       if (btn) btn.disabled = false;
     }
