@@ -91,7 +91,7 @@ const isWhatsAppMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userA
 document.querySelectorAll('.whatsapp-btn').forEach(a => { if (isWhatsAppMobile) a.href = a.href.replace('web.whatsapp.com', 'api.whatsapp.com'); });
 
 // Inquiry → email via FormSubmit (GitHub Pages OK, no access key).
-const INQUIRY_TO = 'dharmendrasinhsisodiya8733@gmail.com';
+const INQUIRY_TO = 'sales@mechequipinternational.com';
 const leadId = () => Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
 
 document.querySelectorAll('.inquiry-form').forEach(form => {
