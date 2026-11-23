@@ -1,4 +1,4 @@
-var TO_EMAIL = 'sales@mechequipinternational.com';
+var TO_EMAIL = 'sales@mechequipinternational.com'; 
 var FROM_NAME = 'Mech Equip';
 
 function doPost(e) {
