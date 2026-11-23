@@ -3,85 +3,30 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Clean email setup | Mech Equip</title>
+  <title>Working email setup | Mech Equip</title>
   <style>
-    body{font-family:system-ui,sans-serif;max-width:760px;margin:32px auto;padding:0 16px;line-height:1.45;color:#122}
-    h1{font-size:1.35rem;margin-bottom:8px}
-    .bad,.good{padding:12px 14px;border-radius:8px;margin:14px 0}
-    .bad{background:#fff1f0;border:1px solid #f0b4ae}
-    .good{background:#eefaf1;border:1px solid #9fd6ad}
-    ol{padding-left:1.2rem}
-    kbd{background:#eee;border:1px solid #ccc;border-radius:4px;padding:1px 6px}
-    button{background:#0d2b46;color:#fff;border:0;padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:600;margin:4px 4px 4px 0}
-    #msg{margin-top:12px;font-weight:600}
+    body{font-family:system-ui,sans-serif;max-width:720px;margin:36px auto;padding:0 16px;line-height:1.5;color:#122}
+    h1{font-size:1.35rem}.box{background:#eef6ff;border:1px solid #bdd7f0;padding:14px 16px;border-radius:8px;margin:16px 0}
+    .warn{background:#fff7ed;border-color:#fdba74} ol{padding-left:1.2rem}
+    a.btn{display:inline-block;background:#0d2b46;color:#fff;text-decoration:none;padding:10px 14px;border-radius:6px;font-weight:600;margin:6px 6px 6px 0}
+    code{background:#f1f5f9;padding:2px 6px;border-radius:4px}
   </style>
 </head>
 <body>
-  <h1>Clean email (FormSubmit text / Sponsor remove)</h1>
-  <div class="bad">
-    FormSubmit free ma aa remove <strong>nathi</strong> thatu:<br>
-    “Someone just submitted…” · Sponsor ad · FormSubmit Team
+  <h1>Working email (FormSubmit Activate hatayu)</h1>
+  <div class="box warn">
+    FormSubmit live site mate Activate ma stuck chhe.
+    Have <strong>Web3Forms</strong> — Activate link nathi, 1 Access Key thi kaam chale.
   </div>
-  <div class="good">
-    Gmail Apps Script thi email PHP jem clean aavse — Mech Equip header + table only, spam ochhu.
+  <div class="box">
+    <ol>
+      <li><a class="btn" href="https://web3forms.com/#start" target="_blank" rel="noopener">Open Web3Forms</a></li>
+      <li>Email nakho jya inquiry aavvi joiye<br>
+        (e.g. <code>dharmendrasinhsisodiya8733@gmail.com</code> ya <code>sales@mechequipinternational.com</code>)</li>
+      <li><strong>Access Key</strong> copy karo (page / email ma aavse)</li>
+      <li>Aa Access Key <strong>Cursor chat ma paste</strong> kari do</li>
+    </ol>
+    <p>Hu <code>assets/script.js</code> ma key set kari dau → tame live site par upload → form email mokse.</p>
   </div>
-
-  <ol>
-    <li><strong>Notepad</strong> ma code open chhe — badhu <kbd>Ctrl+A</kbd> <kbd>Ctrl+C</kbd></li>
-    <li>Google Apps Script tab ma <code>Code.gs</code> ni andar badhu delete</li>
-    <li><kbd>Ctrl+V</kbd> paste → Save 💾</li>
-    <li>Upar code ma <code>function doPost</code> ane <code>function doGet</code> dekhay e confirm karo</li>
-    <li><strong>Deploy → Manage deployments →</strong> pencil → Version: <strong>New version</strong> → Deploy</li>
-    <li>Niche <strong>Test</strong> dabao — “OK” aave tyare Cursor chat ma “done” lakho</li>
-  </ol>
-
-  <button type="button" id="test">Test email script</button>
-  <button type="button" id="open">Open Apps Script</button>
-  <p id="msg"></p>
-
-  <script>
-    const URL = 'https://script.google.com/macros/s/AKfycbyiS58ItcM1VEBi5K3M7v3QMO8Zt25tMETJOczA3NXGEPBN3z_PKT7wZKVgSv8bB7c/exec';
-    document.getElementById('open').onclick = () => window.open('https://script.google.com/home/projects/1kl_5_T89ZjjxHixFg8R7f2eHXBM-QPlvnRCcWnL80hPBXSC-8F5Z56Wdo/edit', '_blank');
-    document.getElementById('test').onclick = async () => {
-      const msg = document.getElementById('msg');
-      msg.style.color = '#333';
-      msg.textContent = 'Testing…';
-      try {
-        const res = await fetch(URL, {
-          method: 'POST',
-          redirect: 'follow',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({
-            name: 'Setup Test',
-            company: 'Mech Equip',
-            email: 'setup@test.com',
-            phone: '9106621761',
-            product: 'Jaw Crusher',
-            message: 'Clean email setup test',
-            source: 'setup-inquiry-email.html',
-            subject: 'Website Inquiry - Mech Equip International (lead#SETUP)'
-          })
-        });
-        const text = await res.text();
-        if (/Script function not found/i.test(text)) {
-          msg.style.color = '#b91c1c';
-          msg.textContent = 'FAIL: Code.gs ma doPost nathi. Paste + Save + New version Deploy karo.';
-          return;
-        }
-        let json = {};
-        try { json = JSON.parse(text); } catch (_) {}
-        if (json.success === false) {
-          msg.style.color = '#b91c1c';
-          msg.textContent = 'FAIL: ' + (json.message || 'send error');
-          return;
-        }
-        msg.style.color = '#0a7a32';
-        msg.textContent = 'OK: Script ready. Gmail Inbox check karo + Cursor chat ma “done” lakho.';
-      } catch (e) {
-        msg.style.color = '#b91c1c';
-        msg.textContent = 'Browser CORS block thai shake. PowerShell test / Deploy New version pachhi “done” lakho.';
-      }
-    };
-  </script>
 </body>
 </html>
