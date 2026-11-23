@@ -86,7 +86,47 @@ document.querySelectorAll('[data-count]').forEach(el=>countObserver.observe(el))
   },{passive:true});
 })();
 
-// Device-specific WhatsApp and actual PHP submission.
-document.querySelectorAll('.whatsapp-btn').forEach(a=>{const mobile=/Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);if(mobile)a.href=a.href.replace('web.whatsapp.com','api.whatsapp.com');});
-document.querySelectorAll('.inquiry-form').forEach(form=>{form.elements.source.value=location.href;form.addEventListener('submit',()=>{const button=form.querySelector('[type=submit]');button.disabled=true;button.textContent='Sending...';});});
-window.addEventListener('pageshow',()=>document.querySelectorAll('.inquiry-form [type=submit]').forEach(b=>{b.disabled=false;b.textContent='Submit Inquiry';}));
+// Device-specific WhatsApp links and inquiry submission (no PHP or email).
+const isWhatsAppMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+document.querySelectorAll('.whatsapp-btn').forEach(a => { if (isWhatsAppMobile) a.href = a.href.replace('web.whatsapp.com', 'api.whatsapp.com'); });
+document.querySelectorAll('.inquiry-form').forEach(form => {
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    if (!form.reportValidity()) return;
+    const data = new FormData(form);
+    const get = name => String(data.get(name) || '').trim();
+    if (get('website')) return;
+    const phone = form.elements.phone;
+    const digits = get('phone').replace(/\D/g, '');
+    if (!/^\+?[0-9 ]+$/.test(get('phone')) || digits.length < 7 || digits.length > 15) {
+      phone.setCustomValidity('Enter a valid phone number with 7 to 15 digits.');
+      phone.reportValidity();
+      return;
+    }
+    const message = [
+      '*🏗️ MECH EQUIP INTERNATIONAL*', '',
+      '*📩 NEW WEBSITE INQUIRY*', '',
+      '━━━━━━━━━━━━━━━━━━', '',
+      '*👤 CUSTOMER DETAILS*', '',
+      '*Full Name:* ' + get('name'), '',
+      '*Company:* ' + (get('company') || 'Not provided'), '',
+      '*Email:* ' + get('email'), '',
+      '*Phone:* ' + get('phone'), '',
+      '━━━━━━━━━━━━━━━━━━', '',
+      '*⚙️ PRODUCT REQUIREMENT*',
+      get('product') || 'Not provided', '',
+      '*📝 MESSAGE*',
+      get('message') || 'Not provided', '',
+      '━━━━━━━━━━━━━━━━━━', '',
+      '*🌐 Source:* Website Inquiry Form', '',
+      '_Thank you for contacting Mech Equip International._'
+    ].join('\n');
+    const base = isWhatsAppMobile ? 'https://api.whatsapp.com/send' : 'https://web.whatsapp.com/send';
+    const url = base + '?phone=919106621761&text=' + encodeURIComponent(message);
+    const status = form.querySelector('.form-msg');
+    if (status) status.textContent = 'Please press Send in WhatsApp to complete your inquiry.';
+    window.location.assign(url);
+  });
+  form.querySelector('[type=submit]').disabled = false;
+  form.elements.phone?.addEventListener('input', () => form.elements.phone.setCustomValidity(''));
+});
